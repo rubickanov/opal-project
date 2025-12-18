@@ -857,8 +857,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 55ffc0571ce42ce4ab59bc83780af8d1, type: 3}
   - {fileID: 21300000, guid: e06105fb224eadb44845c47be1e7c126, type: 3}
   - {fileID: 21300000, guid: 134cc6936710d354496f54df13d98495, type: 3}
-  _rows: 2
-  _columns: 2
+  _cardCount: 8
   _autoSave: 0
 --- !u!1 &1424020112
 GameObject:

@@ -25,7 +25,17 @@ namespace Rubickanov.Opal.Presentation
             _frontImage.sprite = frontSprite;
             _originalColor = color;
             _frontImage.color = color;
+            gameObject.SetActive(true);
             UpdateVisual();
+        }
+
+        public void Reset()
+        {
+            Card = null;
+            _frontImage.sprite = null;
+            _frontImage.color = Color.white;
+            _originalColor = Color.white;
+            gameObject.SetActive(false);
         }
 
         private void Awake()

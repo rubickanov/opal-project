@@ -14,12 +14,12 @@ namespace Rubickanov.Opal.Presentation
 
         [Header("Game Settings")]
         [SerializeField] private List<Sprite> _cardSprites;
-        [SerializeField] private int _rows = 4;
-        [SerializeField] private int _columns = 4;
+        [SerializeField, Min(4)] private int _cardCount = 16;
         [SerializeField] private bool _autoSave = true;
 
         private Game _game;
-        private readonly List<CardView> _cardViews = new();
+        private readonly List<CardView> _activeCards = new();
+        private readonly List<CardView> _pool = new();
         private readonly Dictionary<Card, CardView> _cardViewMap = new();
         private Dictionary<int, Color> _valueColors = new();
 
@@ -41,7 +41,18 @@ namespace Rubickanov.Opal.Presentation
 
         private void OnDestroy()
         {
-            ClearCards();
+            foreach (var cardView in _activeCards)
+            {
+                cardView.OnClicked -= HandleCardClicked;
+            }
+
+            foreach (var cardView in _pool)
+            {
+                if (cardView != null)
+                {
+                    Destroy(cardView.gameObject);
+                }
+            }
         }
 
         private void OnApplicationPause(bool pauseStatus)
@@ -65,7 +76,8 @@ namespace Rubickanov.Opal.Presentation
             GameSaveManager.DeleteSave();
             ClearCards();
 
-            _game = new Game(_rows, _columns);
+            var (rows, columns) = CalculateGridDimensions(_cardCount);
+            _game = new Game(rows, columns);
             _grid.Setup(_game.Rows, _game.Columns);
 
             GenerateColors();
@@ -73,11 +85,29 @@ namespace Rubickanov.Opal.Presentation
             UpdateStats();
         }
 
-        public void StartNewGame(int rows, int columns)
+        public void StartNewGame(int cardCount)
         {
-            _rows = rows;
-            _columns = columns;
+            _cardCount = cardCount;
             StartNewGame();
+        }
+
+        private static (int rows, int columns) CalculateGridDimensions(int cardCount)
+        {
+            if (cardCount < 4) cardCount = 4;
+            if (cardCount % 2 != 0) cardCount--;
+
+            int sqrt = (int)Math.Sqrt(cardCount);
+
+            for (int rows = sqrt; rows >= 2; rows--)
+            {
+                if (cardCount % rows == 0)
+                {
+                    int columns = cardCount / rows;
+                    return (rows, columns);
+                }
+            }
+
+            return (2, cardCount / 2);
         }
 
         private void LoadGame()
@@ -87,11 +117,10 @@ namespace Rubickanov.Opal.Presentation
                 ClearCards();
 
                 _game = game;
-                _rows = _game.Rows;
-                _columns = _game.Columns;
+                _cardCount = _game.Rows * _game.Columns;
                 _valueColors = colors;
 
-                _grid.Setup(_rows, _columns);
+                _grid.Setup(_game.Rows, _game.Columns);
                 CreateCardViews();
                 UpdateStats();
             }
@@ -125,16 +154,28 @@ namespace Rubickanov.Opal.Presentation
         {
             foreach (var card in _game.Cards)
             {
-                var cardView = Instantiate(_cardPrefab, _grid.transform);
+                var cardView = GetOrCreateCardView();
                 var sprite = GetSpriteForCard(card);
                 var color = GetColorForCard(card);
 
                 cardView.Init(card, sprite, color);
                 cardView.OnClicked += HandleCardClicked;
 
-                _cardViews.Add(cardView);
+                _activeCards.Add(cardView);
                 _cardViewMap[card] = cardView;
             }
+        }
+
+        private CardView GetOrCreateCardView()
+        {
+            if (_pool.Count > 0)
+            {
+                var cardView = _pool[^1];
+                _pool.RemoveAt(_pool.Count - 1);
+                return cardView;
+            }
+
+            return Instantiate(_cardPrefab, _grid.transform);
         }
 
         private Sprite GetSpriteForCard(Card card)
@@ -183,13 +224,14 @@ namespace Rubickanov.Opal.Presentation
 
         private void ClearCards()
         {
-            foreach (var cardView in _cardViews)
+            foreach (var cardView in _activeCards)
             {
                 cardView.OnClicked -= HandleCardClicked;
-                Destroy(cardView.gameObject);
+                cardView.Reset();
+                _pool.Add(cardView);
             }
 
-            _cardViews.Clear();
+            _activeCards.Clear();
             _cardViewMap.Clear();
         }
 
