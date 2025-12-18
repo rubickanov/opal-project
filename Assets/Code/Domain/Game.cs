@@ -22,6 +22,8 @@ namespace Rubickanov.Opal.Domain
         private int _consecutiveMatches;
 
         private Card? _firstRevealed;
+        private Card? _pendingCard1;
+        private Card? _pendingCard2;
 
         public Game(int rows, int columns)
         {
@@ -42,6 +44,15 @@ namespace Rubickanov.Opal.Domain
             if (firstRevealedCardId.HasValue)
             {
                 _firstRevealed = _cards.Find(c => c.Id == firstRevealedCardId.Value);
+            }
+
+            foreach (var card in _cards)
+            {
+                if (card.State == CardState.PendingHide)
+                {
+                    if (_pendingCard1 == null) _pendingCard1 = card;
+                    else _pendingCard2 = card;
+                }
             }
         }
 
@@ -98,6 +109,8 @@ namespace Rubickanov.Opal.Domain
 
             first.MarkPendingHide();
             card.MarkPendingHide();
+            _pendingCard1 = first;
+            _pendingCard2 = card;
             changedCards.Add(first);
             _consecutiveMatches = 0;
 
@@ -106,26 +119,37 @@ namespace Rubickanov.Opal.Domain
 
         private void CollectAndHidePendingCards(List<Card> changedCards)
         {
-            foreach (var card in _cards)
+            if (_pendingCard1 != null)
             {
-                if (card.State == CardState.PendingHide)
-                {
-                    card.Hide();
-                    changedCards.Add(card);
-                }
+                _pendingCard1.Hide();
+                changedCards.Add(_pendingCard1);
+                _pendingCard1 = null;
+            }
+
+            if (_pendingCard2 != null)
+            {
+                _pendingCard2.Hide();
+                changedCards.Add(_pendingCard2);
+                _pendingCard2 = null;
             }
         }
 
         private void HideOtherPendingCards(Card except, List<Card> changedCards)
         {
-            foreach (var card in _cards)
+            if (_pendingCard1 != null && _pendingCard1 != except)
             {
-                if (card.State == CardState.PendingHide && card != except)
-                {
-                    card.Hide();
-                    changedCards.Add(card);
-                }
+                _pendingCard1.Hide();
+                changedCards.Add(_pendingCard1);
             }
+
+            if (_pendingCard2 != null && _pendingCard2 != except)
+            {
+                _pendingCard2.Hide();
+                changedCards.Add(_pendingCard2);
+            }
+
+            _pendingCard1 = null;
+            _pendingCard2 = null;
         }
 
         /// <summary>

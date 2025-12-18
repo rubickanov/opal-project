@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Rubickanov.Opal.Domain;
@@ -15,6 +16,7 @@ namespace Rubickanov.Opal.Presentation
         [Header("Game Settings")]
         [SerializeField] private List<Sprite> _cardSprites;
         [SerializeField, Min(4)] private int _cardCount = 16;
+        [SerializeField, Min(0)] private float _previewDuration = 2f;
         [SerializeField] private bool _autoSave = true;
 
         private Game _game;
@@ -22,6 +24,7 @@ namespace Rubickanov.Opal.Presentation
         private readonly List<CardView> _pool = new();
         private readonly Dictionary<Card, CardView> _cardViewMap = new();
         private Dictionary<int, Color> _valueColors = new();
+        private bool _isPreviewActive;
 
         public event Action<int> OnCardAmountUpdated;
         public event Action<int> OnScoreUpdated;
@@ -74,6 +77,7 @@ namespace Rubickanov.Opal.Presentation
 
         public void StartNewGame()
         {
+            StopAllCoroutines();
             GameSaveManager.DeleteSave();
             ClearCards();
 
@@ -84,8 +88,32 @@ namespace Rubickanov.Opal.Presentation
             GenerateColors();
             CreateCardViews();
             UpdateStats();
-            
+
             OnCardAmountUpdated?.Invoke(_game.Cards.Count);
+
+            if (_previewDuration > 0)
+            {
+                StartCoroutine(PreviewCardsRoutine());
+            }
+        }
+
+        private IEnumerator PreviewCardsRoutine()
+        {
+            _isPreviewActive = true;
+
+            foreach (var cardView in _activeCards)
+            {
+                cardView.ShowPreview();
+            }
+
+            yield return new WaitForSeconds(_previewDuration);
+
+            foreach (var cardView in _activeCards)
+            {
+                cardView.UpdateVisual();
+            }
+
+            _isPreviewActive = false;
         }
 
         public void StartNewGame(int cardCount)
@@ -198,6 +226,11 @@ namespace Rubickanov.Opal.Presentation
 
         private void HandleCardClicked(CardView cardView)
         {
+            if (_isPreviewActive)
+            {
+                return;
+            }
+
             var revealData = _game.RevealCard(cardView.Card);
 
             UpdateChangedCardViews(revealData.ChangedCards);

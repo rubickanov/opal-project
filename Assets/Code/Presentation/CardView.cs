@@ -53,6 +53,12 @@ namespace Rubickanov.Opal.Presentation
             OnClicked?.Invoke(this);
         }
 
+        public void ShowPreview()
+        {
+            ShowFront();
+            SetInteractable(false);
+        }
+
         public void UpdateVisual()
         {
             switch (Card.State)
