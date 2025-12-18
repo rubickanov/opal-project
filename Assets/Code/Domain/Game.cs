@@ -45,26 +45,29 @@ namespace Rubickanov.Opal.Domain
             }
         }
 
-        public RevealResult RevealCard(Card card)
+        public RevealData RevealCard(Card card)
         {
+            var changedCards = new List<Card>(4);
+
             if (IsFinished)
             {
-                return RevealResult.GameFinished;
+                return new RevealData(RevealResult.GameFinished, changedCards);
             }
 
             if (card.State != CardState.Hidden)
             {
-                return RevealResult.InvalidCard;
+                return new RevealData(RevealResult.InvalidCard, changedCards);
             }
 
-            HidePendingCards();
+            CollectAndHidePendingCards(changedCards);
 
             card.Reveal();
+            changedCards.Add(card);
 
             if (_firstRevealed == null)
             {
                 _firstRevealed = card;
-                return RevealResult.FirstCard;
+                return new RevealData(RevealResult.FirstCard, changedCards);
             }
 
             var first = _firstRevealed;
@@ -75,27 +78,31 @@ namespace Rubickanov.Opal.Domain
             {
                 first.Match();
                 card.Match();
+                changedCards.Add(first);
                 _matchedPairs++;
                 _consecutiveMatches++;
                 _score += CalculateMatchScore();
 
-                return IsFinished ? RevealResult.MatchAndFinish : RevealResult.Match;
+                var result = IsFinished ? RevealResult.MatchAndFinish : RevealResult.Match;
+                return new RevealData(result, changedCards);
             }
 
             first.MarkPendingHide();
             card.MarkPendingHide();
+            changedCards.Add(first);
             _consecutiveMatches = 0;
 
-            return RevealResult.NoMatch;
+            return new RevealData(RevealResult.NoMatch, changedCards);
         }
 
-        private void HidePendingCards()
+        private void CollectAndHidePendingCards(List<Card> changedCards)
         {
             foreach (var card in _cards)
             {
                 if (card.State == CardState.PendingHide)
                 {
                     card.Hide();
+                    changedCards.Add(card);
                 }
             }
         }

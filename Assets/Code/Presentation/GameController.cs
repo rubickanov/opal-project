@@ -20,6 +20,7 @@ namespace Rubickanov.Opal.Presentation
 
         private Game _game;
         private readonly List<CardView> _cardViews = new();
+        private readonly Dictionary<Card, CardView> _cardViewMap = new();
         private Dictionary<int, Color> _valueColors = new();
 
         public event Action<int> OnScoreUpdated;
@@ -132,6 +133,7 @@ namespace Rubickanov.Opal.Presentation
                 cardView.OnClicked += HandleCardClicked;
 
                 _cardViews.Add(cardView);
+                _cardViewMap[card] = cardView;
             }
         }
 
@@ -152,11 +154,12 @@ namespace Rubickanov.Opal.Presentation
 
         private void HandleCardClicked(CardView cardView)
         {
-            var result = _game.RevealCard(cardView.Card);
-            UpdateAllCardViews();
+            var revealData = _game.RevealCard(cardView.Card);
+
+            UpdateChangedCardViews(revealData.ChangedCards);
             UpdateStats();
 
-            if (result == RevealResult.MatchAndFinish)
+            if (revealData.Result == RevealResult.MatchAndFinish)
             {
                 GameSaveManager.DeleteSave();
                 OnGameFinished?.Invoke();
@@ -167,11 +170,14 @@ namespace Rubickanov.Opal.Presentation
             }
         }
 
-        private void UpdateAllCardViews()
+        private void UpdateChangedCardViews(List<Card> changedCards)
         {
-            foreach (var cardView in _cardViews)
+            foreach (var card in changedCards)
             {
-                cardView.UpdateVisual();
+                if (_cardViewMap.TryGetValue(card, out var cardView))
+                {
+                    cardView.UpdateVisual();
+                }
             }
         }
 
@@ -184,6 +190,7 @@ namespace Rubickanov.Opal.Presentation
             }
 
             _cardViews.Clear();
+            _cardViewMap.Clear();
         }
 
         private void UpdateStats()

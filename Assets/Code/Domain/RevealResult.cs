@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Rubickanov.Opal.Domain
 {
     public enum RevealResult
@@ -8,5 +10,17 @@ namespace Rubickanov.Opal.Domain
         Match,
         NoMatch,
         MatchAndFinish
+    }
+
+    public struct RevealData
+    {
+        public readonly RevealResult Result;
+        public readonly List<Card> ChangedCards;
+
+        public RevealData(RevealResult result, List<Card> changedCards)
+        {
+            Result = result;
+            ChangedCards = changedCards;
+        }
     }
 }
