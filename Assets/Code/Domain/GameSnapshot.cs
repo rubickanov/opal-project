@@ -1,21 +1,19 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+
 namespace Rubickanov.Opal.Domain
 {
+    [Serializable]
     public class GameSnapshot
     {
-        public readonly int Rows;
-
-        public readonly int Columns;
-
-        public readonly List<CardSnapshot> Cards;
-
-        public readonly int Moves;
-
-        public readonly int Score;
-
-        public readonly int MatchedPairs;
-
-        public readonly int? FirstRevealedCardId;
+        public int Rows;
+        public int Columns;
+        public List<CardSnapshot> Cards;
+        public int Moves;
+        public int Score;
+        public int MatchedPairs;
+        public int FirstRevealedCardId;
+        public bool HasFirstRevealedCard;
 
         public GameSnapshot(
             int rows,
@@ -24,8 +22,7 @@ namespace Rubickanov.Opal.Domain
             int moves,
             int score,
             int matchedPairs,
-            int? firstRevealedCardId
-        )
+            int? firstRevealedCardId)
         {
             Rows = rows;
             Columns = columns;
@@ -33,8 +30,13 @@ namespace Rubickanov.Opal.Domain
             Moves = moves;
             Score = score;
             MatchedPairs = matchedPairs;
-            FirstRevealedCardId = firstRevealedCardId;
+            FirstRevealedCardId = firstRevealedCardId ?? -1;
+            HasFirstRevealedCard = firstRevealedCardId.HasValue;
+        }
 
+        public int? GetFirstRevealedCardId()
+        {
+            return HasFirstRevealedCard ? FirstRevealedCardId : null;
         }
     }
 }

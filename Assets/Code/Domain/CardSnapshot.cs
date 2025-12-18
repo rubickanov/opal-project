@@ -1,12 +1,14 @@
-﻿namespace Rubickanov.Opal.Domain
+using System;
+
+namespace Rubickanov.Opal.Domain
 {
+    [Serializable]
     public class CardSnapshot
     {
-        public readonly int Id;
+        public int Id;
+        public int Value;
+        public CardState State;
 
-        public readonly int Value;
-
-        public readonly CardState State;
         public CardSnapshot(int id, int value, CardState state)
         {
             Id = id;

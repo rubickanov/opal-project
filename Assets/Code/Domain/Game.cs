@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Rubickanov.Opal.Domain
@@ -99,11 +100,46 @@ namespace Rubickanov.Opal.Domain
             }
         }
 
+        /// <summary>
+        /// Calculates score for a successful match using the following formula:
+        ///
+        /// Score = BaseScore * ComboMultiplier * DifficultyMultiplier + PerfectBonus
+        ///
+        /// Where:
+        /// - BaseScore = 100 points
+        /// - ComboMultiplier = 1.5 ^ (consecutiveMatches - 1), rewards streaks exponentially
+        /// - DifficultyMultiplier = totalPairs / 8, harder boards give more points
+        /// - PerfectBonus = 1000 points if player matched all pairs without mistakes
+        ///
+        /// Examples (4x4 grid = 8 pairs):
+        ///   1st match:        100 * 1.0  * 1.0 = 100
+        ///   2nd consecutive:  100 * 1.5  * 1.0 = 150
+        ///   3rd consecutive:  100 * 2.25 * 1.0 = 225
+        ///   Perfect game:     adds +1000 bonus
+        ///
+        /// Examples (6x6 grid = 18 pairs):
+        ///   1st match:        100 * 1.0 * 2.25 = 225
+        /// </summary>
         private int CalculateMatchScore()
         {
             const int baseScore = 100;
-            int comboBonus = (_consecutiveMatches - 1) * 25;
-            return baseScore + comboBonus;
+            const double comboExponent = 1.5;
+            const int perfectBonus = 1000;
+
+            int totalPairs = _cards.Count / 2;
+
+            double comboMultiplier = Math.Pow(comboExponent, _consecutiveMatches - 1);
+            double difficultyMultiplier = totalPairs / 8.0;
+
+            int score = (int)(baseScore * comboMultiplier * difficultyMultiplier);
+
+            bool isPerfectGame = IsFinished && _moves == totalPairs;
+            if (isPerfectGame)
+            {
+                score += perfectBonus;
+            }
+
+            return score;
         }
 
         public GameSnapshot CreateSnapshot()

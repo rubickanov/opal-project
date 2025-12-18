@@ -11,7 +11,12 @@ namespace Rubickanov.Opal.Domain
 
             if (totalCards % 2 != 0)
             {
-                throw new ArgumentException("Total number of cards must be even (rows * columns)");
+                totalCards--;
+            }
+
+            if (totalCards < 2)
+            {
+                totalCards = 2;
             }
 
             int pairCount = totalCards / 2;
