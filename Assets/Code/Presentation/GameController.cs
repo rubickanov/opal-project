@@ -12,6 +12,7 @@ namespace Rubickanov.Opal.Presentation
         [Header("References")]
         [SerializeField] private AdaptiveGrid _grid;
         [SerializeField] private CardView _cardPrefab;
+        [SerializeField] private SoundManager _soundManager;
 
         [Header("Game Settings")]
         [SerializeField] private List<Sprite> _cardSprites;
@@ -235,6 +236,7 @@ namespace Rubickanov.Opal.Presentation
 
             UpdateChangedCardViews(revealData.ChangedCards);
             UpdateStats();
+            PlaySound(revealData.Result);
 
             if (revealData.Result == RevealResult.MatchAndFinish)
             {
@@ -244,6 +246,28 @@ namespace Rubickanov.Opal.Presentation
             else if (_autoSave)
             {
                 SaveGame();
+            }
+        }
+
+        private void PlaySound(RevealResult result)
+        {
+            if (_soundManager == null) return;
+
+            switch (result)
+            {
+                case RevealResult.FirstCard:
+                    _soundManager.PlayFlip();
+                    break;
+                case RevealResult.Match:
+                    _soundManager.PlayMatch(0.2f);
+                    break;
+                case RevealResult.NoMatch:
+                    _soundManager.PlayFlip();
+                    _soundManager.PlayNoMatch();
+                    break;
+                case RevealResult.MatchAndFinish:
+                    _soundManager.PlayGameWin(0.2f);
+                    break;
             }
         }
 
