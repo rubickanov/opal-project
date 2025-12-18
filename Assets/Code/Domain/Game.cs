@@ -54,6 +54,15 @@ namespace Rubickanov.Opal.Domain
                 return new RevealData(RevealResult.GameFinished, changedCards);
             }
 
+            if (card.State == CardState.PendingHide)
+            {
+                HideOtherPendingCards(card, changedCards);
+                card.Reveal();
+                changedCards.Add(card);
+                _firstRevealed = card;
+                return new RevealData(RevealResult.FirstCard, changedCards);
+            }
+
             if (card.State != CardState.Hidden)
             {
                 return new RevealData(RevealResult.InvalidCard, changedCards);
@@ -100,6 +109,18 @@ namespace Rubickanov.Opal.Domain
             foreach (var card in _cards)
             {
                 if (card.State == CardState.PendingHide)
+                {
+                    card.Hide();
+                    changedCards.Add(card);
+                }
+            }
+        }
+
+        private void HideOtherPendingCards(Card except, List<Card> changedCards)
+        {
+            foreach (var card in _cards)
+            {
+                if (card.State == CardState.PendingHide && card != except)
                 {
                     card.Hide();
                     changedCards.Add(card);

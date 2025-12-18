@@ -23,6 +23,7 @@ namespace Rubickanov.Opal.Presentation
         private readonly Dictionary<Card, CardView> _cardViewMap = new();
         private Dictionary<int, Color> _valueColors = new();
 
+        public event Action<int> OnCardAmountUpdated;
         public event Action<int> OnScoreUpdated;
         public event Action<int> OnTurnsUpdated;
         public event Action OnGameFinished;
@@ -83,6 +84,8 @@ namespace Rubickanov.Opal.Presentation
             GenerateColors();
             CreateCardViews();
             UpdateStats();
+            
+            OnCardAmountUpdated?.Invoke(_game.Cards.Count);
         }
 
         public void StartNewGame(int cardCount)

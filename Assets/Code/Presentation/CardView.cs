@@ -63,9 +63,13 @@ namespace Rubickanov.Opal.Presentation
                     break;
 
                 case CardState.Revealed:
-                case CardState.PendingHide:
                     ShowFront();
                     SetInteractable(false);
+                    break;
+
+                case CardState.PendingHide:
+                    ShowFront();
+                    SetInteractable(true);
                     break;
 
                 case CardState.Matched:
